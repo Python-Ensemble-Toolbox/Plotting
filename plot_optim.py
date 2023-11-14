@@ -4,12 +4,6 @@ import numpy as np  # Numerical toolbox
 import os
 
 
-# Set paths
-path_to_files = './'
-path_to_figures = './Figures'  # Save here
-if not os.path.exists(path_to_figures):
-    os.mkdir(path_to_figures)
-
 def plot_obj_func():
     """
     Plot the objective function vs. iterations.
@@ -17,15 +11,21 @@ def plot_obj_func():
     % Copyright (c) 2023 NORCE, All Rights Reserved.
     """
 
+    # Set paths
+    path_to_files = './'
+    path_to_figures = './Figures/'  # Save here
+    if not os.path.exists(path_to_figures):
+        os.mkdir(path_to_figures)
+
     # Collect all results
     files = os.listdir(path_to_files)
-    results = [name for name in files if "debug_analysis_step" in name]
+    results = [name for name in files if "optimize_result" in name]
     num_iter = len(results)
 
     obj = []
     for it in range(num_iter):
-        info = np.load(str(path_to_files) + '/debug_analysis_step_{}.npz'.format(it), allow_pickle=True)
-        obj.append(info['obj_func_values'])
+        info = np.load(str(path_to_files) + 'optimize_result_{}.npz'.format(it), allow_pickle=True)
+        obj.append(-info['obj_func_values'])
     obj = np.array(obj)
 
     f, ax = plt.subplots(1, 1, figsize=(10, 10))
@@ -43,8 +43,8 @@ def plot_obj_func():
     ax.set_title('Objective function', size=20)
     plt.tight_layout()
 
-    f.savefig(str(path_to_figures) + '/obj')
-    f.show()
+    f.savefig(str(path_to_figures) + '/obj_func')
+    plt.show()
 
 
 def plot_state(num_var):
@@ -60,14 +60,25 @@ def plot_state(num_var):
     % Copyright (c) 2023 NORCE, All Rights Reserved.
     """
 
+    # Set paths
+    path_to_files = './'
+    path_to_figures = './Figures'  # Save here
+    if not os.path.exists(path_to_figures):
+        os.mkdir(path_to_figures)
+
     # Load results
-    state_initial = np.load('ini_state.npz', allow_pickle=True)
-    state_final = np.load('opt_state.npz', allow_pickle=True)
+    files = os.listdir(path_to_files)
+    results = [name for name in files if "optimize_result" in name]
+    num_iter = len(results)-1
+    state_initial = np.load('optimize_result_0.npz', allow_pickle=True)['x']
+    state_final = np.load(f'optimize_result_{num_iter}.npz', allow_pickle=True)['x']
 
     # Loop over all state variables
-    if type(num_var) == int:
+    if type(num_var) is int:
         num_var = [num_var]  # make sure num_var is a list
-    for i,k in enumerate(state_final):
+    tot_var = sum(num_var)
+    len_state = len(state_initial)
+    for i, k in enumerate(num_var):
 
         if len(num_var) >= i:
             num = num_var[i]
@@ -78,19 +89,19 @@ def plot_state(num_var):
         f, ax = plt.subplots(r, c, figsize=(10, 5))
         ax = ax.flatten()
         for w in np.arange(num):
-            len_var = len(state_initial[k])
-            var_ini = np.array(state_initial[k])[np.arange(w, len_var, 4)]
-            var_fin = np.array(state_final[k])[np.arange(w, len_var, 4)]
+            var_ini = state_initial[sum(num_var[0:i])+w:len_state:tot_var]
+            var_fin = state_final[sum(num_var[0:i])+w:len_state:tot_var]
             ax[w].step(var_ini, '-b')
             ax[w].step(var_fin, '-r')
             ax[w].tick_params(labelsize=16)
             ax[w].set_xlabel('Index', size=18)
             ax[w].set_ylabel('State', size=18)
-            ax[w].set_title(str(k) + ' ' + str(int(w+1)), size=18)
+            ax[w].set_title('Variable ' + str(w+1), size=18)
             if w == 0:
                 ax[w].legend(['Initial', 'Final'], fontsize=16)
 
         f.tight_layout()
         f.savefig(str(path_to_figures) + '/' + str(k))
+        plt.show()
 
 
