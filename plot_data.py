@@ -290,8 +290,8 @@ def plot_seis_2d(scaling=1.0, vintage=0):
         sx = loadmat('utm.mat')['sx']
         sy = loadmat('utm.mat')['sy']
     else:
-        sx = np.linspace(0, mask.shape[0], num=mask.shape[0])
-        sy = np.linspace(0, mask.shape[1], num=mask.shape[1])
+        sx = np.linspace(0, mask.shape[1], num=mask.shape[1])
+        sy = np.linspace(mask.shape[0], 0, num=mask.shape[0])
 
     data = np.nan * np.ones(mask.shape)
     data[mask] = data_obs
