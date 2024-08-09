@@ -37,7 +37,7 @@ def combined():
     f.tight_layout(pad=2.0)
     plt.savefig(str(path_to_figures) + '/obj_func')
     plt.show()
-    plt.close('all')
+    #plt.close('all')
 
 
 def separate(scaling=1.0):

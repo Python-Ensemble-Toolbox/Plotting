@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as pat
 import matplotlib.collections as mcoll
 from matplotlib.colors import ListedColormap
-from mayavi import mlab
 import pickle
 from scipy.interpolate import interp1d
 from scipy.io import loadmat
@@ -446,6 +445,9 @@ def plot_seis_3d(scaling=1.0, vintage=0):
     % Copyright (c) 2023 NORCE, All Rights Reserved.
     
     """
+
+    # Use mayavi package
+    from mayavi import mlab
 
     assim_index = np.genfromtxt('assim_index.csv', delimiter=',')
     assim_index = assim_index.astype(int)

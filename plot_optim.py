@@ -4,7 +4,7 @@ import numpy as np  # Numerical toolbox
 import os
 
 
-def plot_obj_func():
+def plot_obj_func(obj_scaling=None):
     """
     Plot the objective function vs. iterations.
 
@@ -31,14 +31,14 @@ def plot_obj_func():
             inner_it = int(f[ind[1]+1])
             outer_it = int(f[ind[2]+1])
             info = np.load(str(path_to_files) + 'optimize_result_{0}_{1}.npz'
-                           .format(f[ind[1]+1],f[ind[2]+1]), allow_pickle=True)
+                           .format(f[ind[1]+1], f[ind[2]+1]), allow_pickle=True)
             if not len(obj) > outer_it:
                 obj.extend([] for _ in range(outer_it-len(obj)+1))
             if not len(obj[outer_it]) > inner_it:
                 obj[outer_it].extend([] for _ in range(inner_it-len(obj[outer_it])+1))
             val = info['obj_func_values']
-            if val < 0:
-                val *= -1
+            if obj_scaling is not None:
+                val *= obj_scaling
             obj[outer_it][inner_it] = val
         leg = []
         for i in range(len(obj)):
@@ -46,7 +46,7 @@ def plot_obj_func():
                 ax.plot(obj[i], linewidth=4, markersize=10)
             else:
                 ax.plot(obj[i], 'd', markersize=10)
-            leg.append('epf iter ' + str(i));
+            leg.append('epf iter ' + str(i))
         ax.tick_params(labelsize=16)
         ax.set_xlabel('Iteration no.', size=20)
         ax.set_ylabel('Value', size=20)
@@ -61,8 +61,8 @@ def plot_obj_func():
             info = np.load(str(path_to_files) + 'optimize_result_{}.npz'
                            .format(it), allow_pickle=True)
             val = info['obj_func_values']
-            if val < 0:
-                val *= -1
+            if obj_scaling is not None:
+                val *= obj_scaling
             obj.append(val)
         obj = np.array(obj)
         if obj.ndim > 1:  # multiple models
@@ -72,7 +72,7 @@ def plot_obj_func():
                 ax.plot(obj, 'b:')
             obj = np.mean(obj, axis=1)
         ax.plot(obj, 'rs-', linewidth=4, markersize=10)
-        ax.set_xticks(range(num_iter),minor=True)
+        ax.set_xticks(range(num_iter), minor=True)
         ax.tick_params(labelsize=16)
         ax.set_xlabel('Iteration no.', size=20)
         ax.set_ylabel('Value', size=20)
@@ -159,3 +159,4 @@ def plot_state(num_var):
         f.tight_layout()
         f.savefig(str(path_to_figures) + '/variable_' + str(i))
         plt.show()
+        
