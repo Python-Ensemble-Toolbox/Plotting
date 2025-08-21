@@ -28,10 +28,11 @@ def plot_obj_func(obj_scaling=None):
     if len(ind) > 2:  # there is an epf outer loop index in the results
         for f in results:
             ind = [i for i, ltr in enumerate(f) if ltr == '_']
-            inner_it = int(f[ind[1]+1])
-            outer_it = int(f[ind[2]+1])
+            ind.append(f.find('.npz'))
+            inner_it = int(f[ind[1]+1:ind[2]])
+            outer_it = int(f[ind[2]+1:ind[3]])
             info = np.load(str(path_to_files) + 'optimize_result_{0}_{1}.npz'
-                           .format(f[ind[1]+1], f[ind[2]+1]), allow_pickle=True)
+                           .format(f[ind[1]+1:ind[2]], f[ind[2]+1:ind[3]]), allow_pickle=True)
             if not len(obj) > outer_it:
                 obj.extend([] for _ in range(outer_it-len(obj)+1))
             if not len(obj[outer_it]) > inner_it:
@@ -64,7 +65,7 @@ def plot_obj_func(obj_scaling=None):
             if obj_scaling is not None:
                 val *= obj_scaling
             obj.append(val)
-        obj = np.array(obj)
+        obj = np.squeeze(np.array(obj))
         if obj.ndim > 1:  # multiple models
             if np.min(obj.shape) == 1:
                 ax.plot(obj, '.b')
@@ -83,7 +84,7 @@ def plot_obj_func(obj_scaling=None):
         plt.show()
 
 
-def plot_state(num_var):
+def plot_state(num_var, order = 'F'):
     """
     Plot the initial and final state.
 
@@ -92,6 +93,7 @@ def plot_state(num_var):
             This can be e.g., control variables for different wells. It there
             is multiple variable types (e.g., for injectors and producers),
             then num_var can be a list with one number for each type.
+        - order: ordering of variables. See numpy.reshape for more information. Default 'F'.
 
     % Copyright (c) 2023 NORCE, All Rights Reserved.
     """
@@ -111,11 +113,12 @@ def plot_state(num_var):
         outer_it = 0
         for f in results:
             ind = [i for i, ltr in enumerate(f) if ltr == '_']
-            outer_it = np.maximum(int(f[ind[2]+1]), outer_it)
+            ind.append(f.find('.npz'))
+            outer_it = np.maximum(int(f[ind[2]+1:ind[3]]), outer_it)
         for f in results:
             if '_'+str(outer_it)+'.npz' in f:
                 ind = [i for i, ltr in enumerate(f) if ltr == '_']
-                inner_it = np.maximum(int(f[ind[1]+1]), inner_it)
+                inner_it = np.maximum(int(f[ind[1]+1:ind[2]]), inner_it)
         state_initial = np.load('optimize_result_0_0.npz', allow_pickle=True)['x']
         state_final = np.load(f'optimize_result_{inner_it}_{outer_it}.npz', allow_pickle=True)['x']
     else:
@@ -129,6 +132,8 @@ def plot_state(num_var):
     tot_var = sum(num_var)
     len_state = len(state_initial)
     num_steps = int(len_state / tot_var)
+    state_initial = np.reshape(state_initial, (tot_var, num_steps), order = order)
+    state_final = np.reshape(state_final, (tot_var, num_steps), order=order)
     for i, k in enumerate(num_var):
 
         if len(num_var) >= i:
@@ -141,8 +146,8 @@ def plot_state(num_var):
         ax = np.array(ax)
         ax = ax.flatten()
         for w in np.arange(num):
-            var_ini = state_initial[sum(num_var[:i]) * num_steps + w:sum(num_var[:i + 1]) * num_steps:num]
-            var_fin = state_final[sum(num_var[:i]) * num_steps + w:sum(num_var[:i + 1]) * num_steps:num]
+            var_ini = state_initial[sum(num_var[:i]) + w, :]
+            var_fin = state_final[sum(num_var[:i]) + w, :]
             if len(var_ini) > 1:
                 ax[w].step(var_ini, '-b')
                 ax[w].step(var_fin, '-r')
@@ -159,4 +164,3 @@ def plot_state(num_var):
         f.tight_layout()
         f.savefig(str(path_to_figures) + '/variable_' + str(i))
         plt.show()
-        
