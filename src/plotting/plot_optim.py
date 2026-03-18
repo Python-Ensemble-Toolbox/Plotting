@@ -1,5 +1,6 @@
 # External imports
 import matplotlib.pyplot as plt  # Plot functions
+import matplotlib.ticker as mticker
 import numpy as np  # Numerical toolbox
 import os
 
@@ -52,6 +53,9 @@ def plot_obj_func(obj_scaling=None):
         ax.set_xlabel('Iteration no.', size=20)
         ax.set_ylabel('Value', size=20)
         ax.set_title('Objective function', size=20)
+        ax.yaxis.set_major_formatter(mticker.ScalarFormatter())
+        ax.ticklabel_format(style='plain', axis='y')
+        ax.get_yaxis().get_offset_text().set_visible(False)  # Hide offset if present
         fig.legend(leg)
         plt.tight_layout()
         fig.savefig(str(path_to_figures) + '/obj_func_epf')
@@ -78,6 +82,9 @@ def plot_obj_func(obj_scaling=None):
         ax.set_xlabel('Iteration no.', size=20)
         ax.set_ylabel('Value', size=20)
         ax.set_title('Objective function', size=20)
+        ax.yaxis.set_major_formatter(mticker.ScalarFormatter())
+        ax.ticklabel_format(style='plain', axis='y')
+        ax.get_yaxis().get_offset_text().set_visible(False)  # Hide offset if present
         plt.tight_layout()
 
         fig.savefig(str(path_to_figures) + '/obj_func')
