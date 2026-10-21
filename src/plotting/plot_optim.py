@@ -18,6 +18,40 @@ def plot_obj_func(obj_scaling=None):
     if not os.path.exists(path_to_figures):
         os.mkdir(path_to_figures)
 
+    def _sci_multiplier_text(scale: float) -> str:
+        """Format |scale| as a scientific-notation multiplier, e.g. ×1.844×10^8."""
+        if scale is None:
+            return ''
+        try:
+            scale = abs(float(scale))
+        except (TypeError, ValueError):
+            return ''
+        if scale == 0:
+            return r'$\times 0$'
+
+        mant, exp = f"{scale:.3e}".split('e')
+        mant = mant.rstrip('0').rstrip('.')
+        exp = int(exp)
+
+        # For exact powers of 10, drop the mantissa (1×10^k -> 10^k)
+        if mant == '1':
+            return rf'$\times 10^{{{exp}}}$'
+
+        return rf'$\times {mant}\times 10^{{{exp}}}$'
+
+    # Interpret obj_scaling:
+    # - apply only its SIGN to the data
+    # - show its MAGNITUDE as a y-axis multiplier
+    scale_sign = 1.0
+    scale_mag = None
+    if obj_scaling is not None:
+        try:
+            obj_scaling = float(obj_scaling)
+            scale_sign = -1.0 if obj_scaling < 0 else 1.0
+            scale_mag = abs(obj_scaling)
+        except (TypeError, ValueError):
+            obj_scaling = None
+
     # Collect all results
     files = os.listdir(path_to_files)
     results = [name for name in files if "optimize_result" in name]
@@ -40,7 +74,7 @@ def plot_obj_func(obj_scaling=None):
                 obj[outer_it].extend([] for _ in range(inner_it-len(obj[outer_it])+1))
             val = info['obj_func_values']
             if obj_scaling is not None:
-                val *= obj_scaling
+                val = scale_sign * val
             obj[outer_it][inner_it] = val
         leg = []
         for i in range(len(obj)):
@@ -49,13 +83,21 @@ def plot_obj_func(obj_scaling=None):
             else:
                 ax.plot(obj[i], 'd', markersize=10)
             leg.append('epf iter ' + str(i))
+
         ax.tick_params(labelsize=16)
         ax.set_xlabel('Iteration no.', size=20)
         ax.set_ylabel('Value', size=20)
         ax.set_title('Objective function', size=20)
-        ax.yaxis.set_major_formatter(mticker.ScalarFormatter())
-        ax.ticklabel_format(style='plain', axis='y')
-        ax.get_yaxis().get_offset_text().set_visible(False)  # Hide offset if present
+
+        # Scientific notation on y-axis
+        ax.ticklabel_format(axis='y', style='sci', scilimits=(0, 0), useMathText=True)
+
+        # If scaling is provided, show magnitude as a multiplier but keep data unscaled (except sign)
+        if obj_scaling is not None:
+            ax.get_yaxis().get_offset_text().set_visible(False)
+            ax.text(0.02, 0.98, _sci_multiplier_text(scale_mag),
+                    transform=ax.transAxes, ha='left', va='top', fontsize=16)
+
         fig.legend(leg)
         plt.tight_layout()
         fig.savefig(str(path_to_figures) + '/obj_func_epf')
@@ -67,7 +109,7 @@ def plot_obj_func(obj_scaling=None):
                            .format(it), allow_pickle=True)
             val = info['obj_func_values']
             if obj_scaling is not None:
-                val *= obj_scaling
+                val = scale_sign * val
             obj.append(val)
         obj = np.squeeze(np.array(obj))
         if obj.ndim > 1:  # multiple models
@@ -82,11 +124,16 @@ def plot_obj_func(obj_scaling=None):
         ax.set_xlabel('Iteration no.', size=20)
         ax.set_ylabel('Value', size=20)
         ax.set_title('Objective function', size=20)
-        ax.yaxis.set_major_formatter(mticker.ScalarFormatter())
-        ax.ticklabel_format(style='plain', axis='y')
-        ax.get_yaxis().get_offset_text().set_visible(False)  # Hide offset if present
-        plt.tight_layout()
 
+        # Scientific notation on y-axis
+        ax.ticklabel_format(axis='y', style='sci', scilimits=(0, 0), useMathText=True)
+
+        if obj_scaling is not None:
+            ax.get_yaxis().get_offset_text().set_visible(False)
+            ax.text(0.02, 0.98, _sci_multiplier_text(scale_mag),
+                    transform=ax.transAxes, ha='left', va='top', fontsize=16)
+
+        plt.tight_layout()
         fig.savefig(str(path_to_figures) + '/obj_func')
         plt.show()
 
